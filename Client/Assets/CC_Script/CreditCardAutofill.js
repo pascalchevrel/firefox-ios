@@ -55,6 +55,7 @@ export class CreditCardAutofill {
   }
 
   fillCCFormFields(fields, data) {
+    console.log("fields: ", fields, data);
     for (let field of fields) {
       const fieldRef = this.getFieldRef(field);
       if (field.fieldName in data) {

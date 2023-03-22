@@ -2,19 +2,28 @@ import { FormAutofillUtilsShared } from "resource://gre/modules/FormAutofillUtil
 import { CreditCard } from "resource://gre/modules/CreditCard.sys.mjs";
 import { LabelUtils } from "resource://gre/modules/LabelUtils.mjs";
 import { FieldScanner } from "resource://gre/modules/FieldScanner.mjs";
+import { creditCardRulesets } from "resource://gre/modules/CreditCardRuleset.mjs";
 
 // TODO(HACK): Update this
-const creditCardRulesets = {
-  types: ["cc-number", "cc-name"],
-};
+// const creditCardRulesets = {
+//   types: ["cc-number", "cc-name"],
+// };
 
 /**
  * Returns the autocomplete information of fields according to heuristics.
  */
 export const FormAutofillHeuristicsShared = {
+  // TODO(HACK): Update this
   RULES: null,
-
-  CREDIT_CARD_FIELDNAMES: [],
+  // TODO(HACK): Update this
+  CREDIT_CARD_FIELDNAMES: [
+    "cc-name",
+    "cc-number",
+    "cc-exp-month",
+    "cc-exp-year",
+    "cc-exp",
+    "cc-type",
+  ],
   ADDRESS_FIELDNAMES: [],
   /**
    * Try to find a contiguous sub-array within an array.
@@ -531,18 +540,19 @@ export const FormAutofillHeuristicsShared = {
     // if (
     //   FormAutofill.isAutofillCreditCardsAvailable &&
     //   (!isAutoCompleteOff || FormAutofill.creditCardsAutocompleteOff)
-    // )
-    if (!isAutoCompleteOff) {
-      fieldNames.push(...this.CREDIT_CARD_FIELDNAMES);
-    }
+    // ) {
+    //   fieldNames.push(...this.CREDIT_CARD_FIELDNAMES);
+    // }
+    fieldNames.push(...this.CREDIT_CARD_FIELDNAMES);
+
     //TODO(HACK): Update this
     // if (
     //     FormAutofill.isAutofillAddressesAvailable &&
     //     (!isAutoCompleteOff || FormAutofill.addressesAutocompleteOff)
     //   )
-    if (!isAutoCompleteOff) {
-      fieldNames.push(...this.ADDRESS_FIELDNAMES);
-    }
+    // if (!isAutoCompleteOff) {
+    //   fieldNames.push(...this.ADDRESS_FIELDNAMES);
+    // }
 
     if (HTMLSelectElement.isInstance(element)) {
       const FIELDNAMES_FOR_SELECT_ELEMENT = [
@@ -586,9 +596,10 @@ export const FormAutofillHeuristicsShared = {
       return info;
     }
 
-    if (!this._prefEnabled) {
-      return null;
-    }
+    // TODO(HACK): Update this
+    // if (!this._prefEnabled) {
+    //   return null;
+    // }
 
     let fields = this._getPossibleFieldNames(element);
 
