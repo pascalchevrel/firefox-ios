@@ -28,6 +28,9 @@ class CreditCardHelper: TabContentScript {
         // TODO: Retrieve response value from user selected credit card
         guard (message.body as? [String: Any]) != nil else { return }
         guard let request = message.body as? [String: Any] else { return }
+        // TMP: Check payload received from JS
+        print(request)
+
         //
         // Example value: [
         //     "data": [
@@ -39,27 +42,32 @@ class CreditCardHelper: TabContentScript {
         //     "id": request["id"]!,    
         // ]
         
-        let response: [String: Any]  = [
-             "data": [
-                 "cc-name": "Jane Doe",
-                 "cc-number": "5555555555554444",
-                 "cc-exp-month": "05",
-                 "cc-exp-year": "2028",
-                 "cc-exp": "05/2028",
-               ],
-             "id": request["id"]!,
-        ]
+        // send to swift
+        // "cc-name": "Jane Doe",
+        // "cc-number": "5555555555554444",
+    
+        
+//       let response: [String: Any]  = [
+//             "data": [
+//                 "cc-name": "Jane Doe",
+//                 "cc-number": "5555555555554444",
+//                 "cc-exp-month": "05",
+//                 "cc-exp-year": "2028",
+//                 "cc-exp": "05/2028",
+//               ],
+//             "id": request["id"]!,
+//        ]
 
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: response)
-            guard let jsonDataVal = String(data: jsonData, encoding: .utf8) else { return }
-            let fillCreditCardInfoCallback = "window.__firefox__.CreditCardHelper.fillCreditCardInfo('\(jsonDataVal)')"
-            guard let webView = tab?.webView else {return}
-            webView.evaluateJavascriptInDefaultContentWorld(fillCreditCardInfoCallback)
-        } catch let error as NSError {
-            logger.log("Credit card script error \(error)",
-                       level: .debug,
-                       category: .webview)
-        }
+//        do {
+//            let jsonData = try JSONSerialization.data(withJSONObject: response)
+//            guard let jsonDataVal = String(data: jsonData, encoding: .utf8) else { return }
+//            let fillCreditCardInfoCallback = "window.__firefox__.CreditCardHelper.fillCreditCardInfo('\(jsonDataVal)')"
+//            guard let webView = tab?.webView else {return}
+//            webView.evaluateJavascriptInDefaultContentWorld(fillCreditCardInfoCallback)
+//        } catch let error as NSError {
+//            logger.log("Credit card script error \(error)",
+//                       level: .debug,
+//                       category: .webview)
+//        }
     }
 }
