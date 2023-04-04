@@ -37,7 +37,8 @@ export class CreditCardAutofill {
     const allFields = fieldsMap.flatMap((fields) =>
       fields.map(this.getFieldRef)
     );
-    this.creditCardSections.push({ form, fields: fieldsMap[0] }); // Hacky: This is for PoC only
+    // Hacky: This is for PoC only - FXIOS-6124
+    this.creditCardSections.push({ form, fields: fieldsMap[0] }); 
     return allFields;
   }
 
