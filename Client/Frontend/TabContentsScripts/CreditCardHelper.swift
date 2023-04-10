@@ -30,7 +30,6 @@ struct FillCreditCardForm: Codable {
     let type: String
 }
 
-
 class CreditCardHelper: TabContentScript {
     private weak var tab: Tab?
     private var logger: Logger = DefaultLogger.shared
@@ -47,14 +46,31 @@ class CreditCardHelper: TabContentScript {
         return "creditCardMessageHandler"
     }
 
+    private var requestID: Int = -1
+
+    // MARK: Retrieval
     func userContentController(_ userContentController: WKUserContentController,
                                didReceiveScriptMessage message: WKScriptMessage) {
         guard let data = message.body as? [String: Any] else { return }
-        guard let fieldTypes = parseFieldType(messageBody: data) else { return }
+        guard let payload = parseFieldType(messageBody: data)?.payload else { return }
+        guard !payload.fieldTypes.isEmpty else { return }
+        print("NB -- \(payload)")
+        requestID = payload.id
+        var fieldTypes = payload.fieldTypes
         let fieldTypeValues = getFieldTypeValues(fieldTypes: fieldTypes)
+        
+        let creditCard = UnencryptedCreditCardFields(
+            ccName: "Jane Doe",
+            ccNumber: "1234567890123456",
+            ccNumberLast4: "3456",
+            ccExpMonth: 03,
+            ccExpYear: 2027,
+            ccType: "Visa")
+        guard let tab = tab else { return }
+        injectCardInfo(card: creditCard, tab: tab)
     }
 
-    func parseFieldType(messageBody: [String: Any]) -> [FieldType]? {
+    func parseFieldType(messageBody: [String: Any]) -> FillCreditCardForm? {
         let decoder = JSONDecoder()
 
         do {
@@ -62,8 +78,12 @@ class CreditCardHelper: TabContentScript {
                 withJSONObject: messageBody, options: .prettyPrinted)
             let fillCreditCardForm = try decoder.decode(FillCreditCardForm.self,
                                                         from: jsonData)
-            let fieldTypes = fillCreditCardForm.payload.fieldTypes
-            return fieldTypes
+            
+//            let json = try! JSONSerialization.jsonObject(with: jsonData, options: [])
+
+            // Print the contents of the object
+//            print("NB -- JSON -- \n\(json)")
+            return fillCreditCardForm
         } catch {
             logger.log("Unable to parse field type for CC",
                        level: .warning,
@@ -93,5 +113,52 @@ class CreditCardHelper: TabContentScript {
             }
         }
         return ccPlainText
+    }
+
+    // MARK: Injection
+    func injectCardInfo(card: UnencryptedCreditCardFields,
+                        tab: Tab) -> Bool {
+        guard !card.ccNumber.isEmpty, card.ccExpYear > 0, !card.ccName.isEmpty else {
+            return false
+        }
+
+        do {
+            let jsonData = try JSONSerialization.data(
+                withJSONObject: injectionJSONBuilder(card: card, reqID: requestID))
+            guard let jsonDataVal = String(data: jsonData, encoding: .utf8) else {
+                return false
+            }
+            let fxWindowVal = "window.__firefox__.CreditCardHelper"
+            let fillCreditCardInfoCallback = "\(fxWindowVal).fillCreditCardInfo('\(jsonDataVal)')"
+            guard let webView = tab.webView else {
+                return false
+            }
+            webView.evaluateJavascriptInDefaultContentWorld(fillCreditCardInfoCallback) { val, err in
+                print("NB val = \(val)")
+                print("NB err = \(err)")
+            }
+            webView.evaluateJavascriptInDefaultContentWorld(fillCreditCardInfoCallback)
+        } catch let error as NSError {
+            logger.log("Credit card script error \(error)",
+                       level: .debug,
+                       category: .webview)
+        }
+
+        return true
+    }
+
+    private func injectionJSONBuilder(card: UnencryptedCreditCardFields, reqID: Int) -> [String: Any] {
+        let injectionJSON: [String: Any] = [
+             "data": [
+                "cc-name": card.ccName,
+                "cc-number": card.ccNumber,
+                "cc-exp-month": "\(card.ccExpMonth)",
+                "cc-exp-year": "\(card.ccExpYear)",
+                "cc-exp": "\(card.ccExpMonth)/\(card.ccExpYear)",
+               ],
+             "id": reqID,
+        ]
+
+        return injectionJSON
     }
 }

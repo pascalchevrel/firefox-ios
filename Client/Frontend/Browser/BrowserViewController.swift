@@ -1767,7 +1767,7 @@ extension BrowserViewController: LegacyTabDelegate {
 
         let autofillCreditCardStatus = featureFlags.isFeatureEnabled(
             .creditCardAutofillStatus, checking: .buildOnly)
-        if autofillCreditCardStatus {
+        if true {
             let creditCardHelper = CreditCardHelper(tab: tab)
             tab.addContentScript(creditCardHelper, name: CreditCardHelper.name())
         }
